@@ -18,7 +18,7 @@ canvas.addEventListener('mousemove', (e) => {
 });
 canvas.addEventListener('mouseup', () => {
     drawing = false;
-    checkFishAfterStroke();
+    checkbirdAfterStroke();
 });
 canvas.addEventListener('mouseleave', () => {
     drawing = false;
@@ -44,7 +44,7 @@ canvas.addEventListener('touchmove', (e) => {
 });
 canvas.addEventListener('touchend', () => {
     drawing = false;
-    checkFishAfterStroke();
+    checkbirdAfterStroke();
 });
 canvas.addEventListener('touchcancel', () => {
     drawing = false;
@@ -86,25 +86,25 @@ function showModal(html, onClose) {
     return { close, modal };
 }
 
-// --- Fish submission modal handler ---
-async function submitFish(artist, needsModeration = false) {
+// --- bird submission modal handler ---
+async function submitbird(artist, needsModeration = false) {
     function dataURLtoBlob(dataurl) {
         const arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1],
             bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n);
         for (let i = 0; i < n; i++) u8arr[i] = bstr.charCodeAt(i);
         return new Blob([u8arr], { type: mime });
     }
-    const fishImgData = canvas.toDataURL('image/png');
-    const imageBlob = dataURLtoBlob(fishImgData);
+    const birdImgData = canvas.toDataURL('image/png');
+    const imageBlob = dataURLtoBlob(birdImgData);
     const formData = new FormData();
-    formData.append('image', imageBlob, 'fish.png');
+    formData.append('image', imageBlob, 'bird.png');
     formData.append('artist', artist);
     formData.append('needsModeration', needsModeration.toString());
     if(localStorage.getItem('userId')) {
         formData.append('userId', localStorage.getItem('userId'));
     }
     // Retro loading indicator
-    let submitBtn = document.getElementById('submit-fish');
+    let submitBtn = document.getElementById('submit-bird');
     if (submitBtn) {
         submitBtn.disabled = true;
         submitBtn.innerHTML = `<span class='spinner' style='display:inline-block;width:18px;height:18px;border:3px solid #3498db;border-top:3px solid #fff;border-radius:50%;animation:spin 1s linear infinite;vertical-align:middle;'></span>`;
@@ -125,7 +125,7 @@ async function submitFish(artist, needsModeration = false) {
         }
         
         // Await server response
-        const resp = await fetch(`${BACKEND_URL}/uploadfish`, {
+        const resp = await fetch(`${BACKEND_URL}/uploadbird`, {
             method: 'POST',
             headers: headers,
             body: formData
@@ -137,27 +137,27 @@ async function submitFish(artist, needsModeration = false) {
             submitBtn.textContent = 'Submit';
         }
         if (result && result.data && result.data.Image) {
-            // Save today's date to track fish submission
+            // Save today's date to track bird submission
             const today = new Date().toDateString();
-            localStorage.setItem('lastFishDate', today);
+            localStorage.setItem('lastbirdDate', today);
             localStorage.setItem('userId', result.data.userId);
             
             // Show success message based on moderation status
             if (needsModeration) {
                 showModal(`<div style='text-align:center;'>
-                    <h1>Fish Submitted for Review</div>
-                    <div>Your fish has been submitted and will appear in the tank once it passes moderator review.</div>
+                    <h1>bird Submitted for Review</div>
+                    <div>Your bird has been submitted and will appear in the tank once it passes moderator review.</div>
                     <button onclick="window.location.href='tank.html'">View Tank</button>
                 </div>`, () => {});
             } else {
-                // Regular fish - go directly to tank
+                // Regular bird - go directly to tank
                 window.location.href = 'tank.html';
             }
         } else {
-            alert('Sorry, there was a problem uploading your fish. Please try again.');
+            alert('Sorry, there was a problem uploading your bird. Please try again.');
         }
     } catch (err) {
-        alert('Failed to submit fish: ' + err.message);
+        alert('Failed to submit bird: ' + err.message);
         if (submitBtn) {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Submit';
@@ -166,42 +166,42 @@ async function submitFish(artist, needsModeration = false) {
 }
 
 swimBtn.addEventListener('click', async () => {
-    // Check fish validity for warning purposes
-    const isFish = await verifyFishDoodle(canvas);
-    lastFishCheck = isFish;
-    showFishWarning(!isFish);
+    // Check bird validity for warning purposes
+    const isbird = await verifybirdDoodle(canvas);
+    lastbirdCheck = isbird;
+    showbirdWarning(!isbird);
     
     // Get saved artist name or use Anonymous
     const savedArtist = localStorage.getItem('artistName');
     const defaultName = (savedArtist && savedArtist !== 'Anonymous') ? savedArtist : 'Anonymous';
     
-    // Show different modal based on fish validity
-    if (!isFish) {
-        // Show moderation warning modal for low-scoring fish
+    // Show different modal based on bird validity
+    if (!isbird) {
+        // Show moderation warning modal for low-scoring bird
         showModal(`<div style='text-align:center;'>
-            <div style='color:#ff6b35;font-weight:bold;margin-bottom:12px;'>Low Fish Score</div>
-            <div style='margin-bottom:16px;line-height:1.4;'>i dont think this is a fish but you can submit it anyway and ill review it</div>
+            <div style='color:#ff6b35;font-weight:bold;margin-bottom:12px;'>Low bird Score</div>
+            <div style='margin-bottom:16px;line-height:1.4;'>i dont think this is a bird but you can submit it anyway and ill review it</div>
             <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
-            <button id='submit-fish' >Submit for Review</button>
-            <button id='cancel-fish' >Cancel</button>
+            <button id='submit-bird' >Submit for Review</button>
+            <button id='cancel-bird' >Cancel</button>
         </div>`, () => { });
     } else {
-        // Show normal submission modal for good fish
+        // Show normal submission modal for good bird
         showModal(`<div style='text-align:center;'>
-            <div style='color:#27ae60;font-weight:bold;margin-bottom:12px;'>Great Fish!</div>
+            <div style='color:#27ae60;font-weight:bold;margin-bottom:12px;'>Great bird!</div>
             <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
-            <button id='submit-fish' style='padding:6px 18px;background:#27ae60;color:white;border:none;border-radius:4px;'>Submit</button>
-            <button id='cancel-fish' style='padding:6px 18px;margin-left:10px;background:#ccc;border:none;border-radius:4px;'>Cancel</button>
+            <button id='submit-bird' style='padding:6px 18px;background:#27ae60;color:white;border:none;border-radius:4px;'>Submit</button>
+            <button id='cancel-bird' style='padding:6px 18px;margin-left:10px;background:#ccc;border:none;border-radius:4px;'>Cancel</button>
         </div>`, () => { });
     }
     
-    document.getElementById('submit-fish').onclick = async () => {
+    document.getElementById('submit-bird').onclick = async () => {
         const artist = document.getElementById('artist-name').value.trim() || 'Anonymous';
         // Save artist name to localStorage for future use
         localStorage.setItem('artistName', artist);
-        await submitFish(artist, !isFish); // Pass moderation flag
+        await submitbird(artist, !isbird); // Pass moderation flag
     };
-    document.getElementById('cancel-fish').onclick = () => {
+    document.getElementById('cancel-bird').onclick = () => {
         document.querySelector('div[style*="z-index: 9999"]')?.remove();
     };
 });
@@ -326,13 +326,13 @@ function undo() {
     } else {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-    // Recalculate fish probability after undo
-    checkFishAfterStroke();
+    // Recalculate bird probability after undo
+    checkbirdAfterStroke();
 }
 
 function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    checkFishAfterStroke();
+    checkbirdAfterStroke();
 }
 
 function flipCanvas() {
@@ -367,8 +367,8 @@ function flipCanvas() {
     // Restore the context state
     ctx.restore();
     
-    // Recompute fish score after flipping
-    checkFishAfterStroke();
+    // Recompute bird score after flipping
+    checkbirdAfterStroke();
 }
 
 function createUndoButton() {
@@ -486,8 +486,8 @@ function cropCanvasToContent(srcCanvas) {
     return cropped;
 }
 
-// Helper to crop, scale, and center a fish image into a display canvas
-function makeDisplayFishCanvas(img, width = 80, height = 48) {
+// Helper to crop, scale, and center a bird image into a display canvas
+function makeDisplaybirdCanvas(img, width = 80, height = 48) {
     const displayCanvas = document.createElement('canvas');
     displayCanvas.width = width;
     displayCanvas.height = height;
@@ -508,14 +508,14 @@ function makeDisplayFishCanvas(img, width = 80, height = 48) {
     return displayCanvas;
 }
 
-// ONNX fish doodle classifier integration
+// ONNX bird doodle classifier integration
 let ortSession = null;
-let lastFishCheck = true;
+let lastbirdCheck = true;
 let isModelLoading = false;
 let modelLoadPromise = null;
 
-// Load ONNX model (make sure fish_doodle_classifier.onnx is in your public folder)
-async function loadFishModel() {
+// Load ONNX model (make sure bird_doodle_classifier.onnx is in your public folder)
+async function loadbirdModel() {
     // If already loaded, return immediately
     if (ortSession) {
         return ortSession;
@@ -528,15 +528,15 @@ async function loadFishModel() {
     
     // Start loading
     isModelLoading = true;
-    console.log('Loading fish model...');
+    console.log('Loading bird model...');
     
     modelLoadPromise = (async () => {
         try {
-            ortSession = await window.ort.InferenceSession.create('fish_doodle_classifier.onnx');
-            console.log('Fish model loaded successfully');
+            ortSession = await window.ort.InferenceSession.create('bird_doodle_classifier.onnx');
+            console.log('bird model loaded successfully');
             return ortSession;
         } catch (error) {
-            console.error('Failed to load fish model:', error);
+            console.error('Failed to load bird model:', error);
             throw error;
         } finally {
             isModelLoading = false;
@@ -605,11 +605,11 @@ function preprocessCanvasForONNX(canvas) {
     return new window.ort.Tensor('float32', input, [1, 3, SIZE, SIZE]);
 }
 
-// Updated verifyFishDoodle function to match new model output format
-async function verifyFishDoodle(canvas) {
+// Updated verifybirdDoodle function to match new model output format
+async function verifybirdDoodle(canvas) {
     // Model should already be loaded, but check just in case
     if (!ortSession) {
-        throw new Error('Fish model not loaded');
+        throw new Error('bird model not loaded');
     }
     
     // Use updated preprocessing
@@ -627,26 +627,26 @@ async function verifyFishDoodle(canvas) {
     const output = results[outputKey].data;
     
     // The model outputs a single logit value
-    // During training: labels = 1 - labels, so fish = 0, not_fish = 1
-    // Model output > 0.5 means "not_fish", < 0.5 means "fish"
+    // During training: labels = 1 - labels, so bird = 0, not_bird = 1
+    // Model output > 0.5 means "not_bird", < 0.5 means "bird"
     const logit = output[0];
     const prob = 1 / (1 + Math.exp(-logit));  // Sigmoid activation
     
-    // Since the model was trained with inverted labels (fish=0, not_fish=1)
-    // A low probability means it's more likely to be a fish
-    const fishProbability = 1 - prob;
-    const isFish = fishProbability >= 0.60;  // Threshold for fish classification
+    // Since the model was trained with inverted labels (bird=0, not_bird=1)
+    // A low probability means it's more likely to be a bird
+    const birdProbability = 1 - prob;
+    const isbird = birdProbability >= 0.60;  // Threshold for bird classification
         
-    // Update UI with fish probability
-    let probDiv = document.getElementById('fish-probability');
+    // Update UI with bird probability
+    let probDiv = document.getElementById('bird-probability');
     if (!probDiv) {
         probDiv = document.createElement('div');
-        probDiv.id = 'fish-probability';
+        probDiv.id = 'bird-probability';
         probDiv.style.textAlign = 'center';
         probDiv.style.margin = '10px 0 0 0';
         probDiv.style.fontWeight = 'bold';
         probDiv.style.fontSize = '1.1em';
-        probDiv.style.color = isFish ? '#218838' : '#c0392b';
+        probDiv.style.color = isbird ? '#218838' : '#c0392b';
         const drawCanvas = document.getElementById('draw-canvas');
         if (drawCanvas && drawCanvas.parentNode) {
             if (drawCanvas.nextSibling) {
@@ -659,13 +659,13 @@ async function verifyFishDoodle(canvas) {
             if (drawUI) drawUI.appendChild(probDiv);
         }
     }
-    probDiv.textContent = `Fish probability: ${(fishProbability * 100).toFixed(1)}%`;
-    probDiv.style.color = isFish ? '#218838' : '#c0392b';
-    return isFish;
+    probDiv.textContent = `bird probability: ${(birdProbability * 100).toFixed(1)}%`;
+    probDiv.style.color = isbird ? '#218838' : '#c0392b';
+    return isbird;
 }
 
-// Show/hide fish warning and update background color
-function showFishWarning(show) {
+// Show/hide bird warning and update background color
+function showbirdWarning(show) {
     const drawUI = document.getElementById('draw-ui');
     if (drawUI) {
         drawUI.style.background = show ? '#ffeaea' : '#eaffea'; // red for invalid, green for valid
@@ -673,23 +673,23 @@ function showFishWarning(show) {
     }
 }
 
-// After each stroke, check if it's a fish
-async function checkFishAfterStroke() {
+// After each stroke, check if it's a bird
+async function checkbirdAfterStroke() {
     if (!window.ort) return; // ONNX runtime not loaded
     
     // Wait for model to be loaded if it's not ready yet
     if (!ortSession) {
         try {
-            await loadFishModel();
+            await loadbirdModel();
         } catch (error) {
-            console.error('Model not available for fish checking:', error);
+            console.error('Model not available for bird checking:', error);
             return;
         }
     }
     
-    const isFish = await verifyFishDoodle(canvas);
-    lastFishCheck = isFish;
-    showFishWarning(!isFish);
+    const isbird = await verifybirdDoodle(canvas);
+    lastbirdCheck = isbird;
+    showbirdWarning(!isbird);
 }
 
 // Load ONNX Runtime Web from CDN if not present
@@ -699,20 +699,20 @@ async function checkFishAfterStroke() {
         script.src = 'https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js';
         script.onload = () => { 
             console.log('ONNX Runtime loaded, starting model load...');
-            loadFishModel().catch(error => {
+            loadbirdModel().catch(error => {
                 console.error('Failed to load model on startup:', error);
             });
         };
         document.head.appendChild(script);
     } else {
         console.log('ONNX Runtime already available, starting model load...');
-        loadFishModel().catch(error => {
+        loadbirdModel().catch(error => {
             console.error('Failed to load model on startup:', error);
         });
     }
 })();
 
-// Check if user already drew a fish today when page loads
+// Check if user already drew a bird today when page loads
 // Function to show welcome back message for returning users
 function showWelcomeBackMessage() {
     const userId = localStorage.getItem('userId');
@@ -750,12 +750,12 @@ document.addEventListener('DOMContentLoaded', () => {
     showWelcomeBackMessage();
     
     const today = new Date().toDateString();
-    const lastFishDate = localStorage.getItem('lastFishDate');
-    console.log(`Last fish date: ${lastFishDate}, Today: ${today}`);
-    if (lastFishDate === today) {
-        showModal(`<div style='text-align:center;'>You already drew a fish today!<br><br>
-            <button id='go-to-tank' style='padding:8px 16px; margin: 0 5px;'>Take me to fishtank</button>
-            <button id='draw-another' style='padding:8px 16px; margin: 0 5px;'>I want to draw another fish</button></div>`, () => { });
+    const lastbirdDate = localStorage.getItem('lastbirdDate');
+    console.log(`Last bird date: ${lastbirdDate}, Today: ${today}`);
+    if (lastbirdDate === today) {
+        showModal(`<div style='text-align:center;'>You already drew a bird today!<br><br>
+            <button id='go-to-tank' style='padding:8px 16px; margin: 0 5px;'>Take me to birdtank</button>
+            <button id='draw-another' style='padding:8px 16px; margin: 0 5px;'>I want to draw another bird</button></div>`, () => { });
         
         document.getElementById('go-to-tank').onclick = () => {
             window.location.href = 'tank.html';
