@@ -4,14 +4,7 @@ const ctx = canvas.getContext('2d');
 ctx.lineWidth = 6; // Make lines thicker for better visibility
 let drawing = false;
 
-// Helper function to escape HTML (needed for security)
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Mouse events - Made async to handle checkFishAfterStroke
+// Mouse events
 canvas.addEventListener('mousedown', (e) => {
     drawing = true;
     ctx.beginPath();
@@ -23,15 +16,15 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.stroke();
     }
 });
-canvas.addEventListener('mouseup', async () => {
+canvas.addEventListener('mouseup', () => {
     drawing = false;
-    await checkFishAfterStroke();
+    checkFishAfterStroke();
 });
 canvas.addEventListener('mouseleave', () => {
     drawing = false;
 });
 
-// Touch events for mobile - Made async to handle checkFishAfterStroke
+// Touch events for mobile
 canvas.addEventListener('touchstart', (e) => {
     e.preventDefault();
     drawing = true;
@@ -49,19 +42,19 @@ canvas.addEventListener('touchmove', (e) => {
         ctx.stroke();
     }
 });
-canvas.addEventListener('touchend', async () => {
+canvas.addEventListener('touchend', () => {
     drawing = false;
-    await checkFishAfterStroke();
+    checkFishAfterStroke();
 });
 canvas.addEventListener('touchcancel', () => {
     drawing = false;
 });
 
-// Ctrl + Z to undo - Made async
-document.addEventListener('keydown', async (e) => {
+// Ctrl + Z to undo
+document.addEventListener('keydown', (e) => {
     if (e.ctrlKey && e.key === 'z') {
         e.preventDefault();
-        await undo();
+        undo();
     }
 });
 
@@ -131,11 +124,6 @@ async function submitFish(artist, needsModeration = false) {
             headers['Authorization'] = `Bearer ${userToken}`;
         }
         
-        // Check if BACKEND_URL is defined
-        if (typeof BACKEND_URL === 'undefined') {
-            throw new Error('Backend URL not configured');
-        }
-        
         // Await server response
         const resp = await fetch(`${BACKEND_URL}/uploadfish`, {
             method: 'POST',
@@ -178,49 +166,44 @@ async function submitFish(artist, needsModeration = false) {
 }
 
 swimBtn.addEventListener('click', async () => {
-    try {
-        // Check fish validity for warning purposes
-        const isFish = await verifyFishDoodle(canvas);
-        lastFishCheck = isFish;
-        showFishWarning(!isFish);
-        
-        // Get saved artist name or use Anonymous
-        const savedArtist = localStorage.getItem('artistName');
-        const defaultName = (savedArtist && savedArtist !== 'Anonymous') ? savedArtist : 'Anonymous';
-        
-        // Show different modal based on fish validity
-        if (!isFish) {
-            // Show moderation warning modal for low-scoring fish
-            showModal(`<div style='text-align:center;'>
-                <div style='color:#ff6b35;font-weight:bold;margin-bottom:12px;'>Low Fish Score</div>
-                <div style='margin-bottom:16px;line-height:1.4;'>i dont think this is a fish but you can submit it anyway and ill review it</div>
-                <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
-                <button id='submit-fish' >Submit for Review</button>
-                <button id='cancel-fish' >Cancel</button>
-            </div>`, () => { });
-        } else {
-            // Show normal submission modal for good fish
-            showModal(`<div style='text-align:center;'>
-                <div style='color:#27ae60;font-weight:bold;margin-bottom:12px;'>Great Fish!</div>
-                <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
-                <button id='submit-fish' style='padding:6px 18px;background:#27ae60;color:white;border:none;border-radius:4px;'>Submit</button>
-                <button id='cancel-fish' style='padding:6px 18px;margin-left:10px;background:#ccc;border:none;border-radius:4px;'>Cancel</button>
-            </div>`, () => { });
-        }
-        
-        document.getElementById('submit-fish').onclick = async () => {
-            const artist = document.getElementById('artist-name').value.trim() || 'Anonymous';
-            // Save artist name to localStorage for future use
-            localStorage.setItem('artistName', artist);
-            await submitFish(artist, !isFish); // Pass moderation flag
-        };
-        document.getElementById('cancel-fish').onclick = () => {
-            document.querySelector('div[style*="z-index: 9999"]')?.remove();
-        };
-    } catch (error) {
-        console.error('Error in swim button click:', error);
-        alert('Sorry, there was an error processing your fish. Please try again.');
+    // Check fish validity for warning purposes
+    const isFish = await verifyFishDoodle(canvas);
+    lastFishCheck = isFish;
+    showFishWarning(!isFish);
+    
+    // Get saved artist name or use Anonymous
+    const savedArtist = localStorage.getItem('artistName');
+    const defaultName = (savedArtist && savedArtist !== 'Anonymous') ? savedArtist : 'Anonymous';
+    
+    // Show different modal based on fish validity
+    if (!isFish) {
+        // Show moderation warning modal for low-scoring fish
+        showModal(`<div style='text-align:center;'>
+            <div style='color:#ff6b35;font-weight:bold;margin-bottom:12px;'>Low Fish Score</div>
+            <div style='margin-bottom:16px;line-height:1.4;'>i dont think this is a fish but you can submit it anyway and ill review it</div>
+            <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
+            <button id='submit-fish' >Submit for Review</button>
+            <button id='cancel-fish' >Cancel</button>
+        </div>`, () => { });
+    } else {
+        // Show normal submission modal for good fish
+        showModal(`<div style='text-align:center;'>
+            <div style='color:#27ae60;font-weight:bold;margin-bottom:12px;'>Great Fish!</div>
+            <div style='margin-bottom:16px;'>Sign your art:<br><input id='artist-name' value='${escapeHtml(defaultName)}' style='margin:10px 0 16px 0;padding:6px;width:80%;max-width:180px;'></div>
+            <button id='submit-fish' style='padding:6px 18px;background:#27ae60;color:white;border:none;border-radius:4px;'>Submit</button>
+            <button id='cancel-fish' style='padding:6px 18px;margin-left:10px;background:#ccc;border:none;border-radius:4px;'>Cancel</button>
+        </div>`, () => { });
     }
+    
+    document.getElementById('submit-fish').onclick = async () => {
+        const artist = document.getElementById('artist-name').value.trim() || 'Anonymous';
+        // Save artist name to localStorage for future use
+        localStorage.setItem('artistName', artist);
+        await submitFish(artist, !isFish); // Pass moderation flag
+    };
+    document.getElementById('cancel-fish').onclick = () => {
+        document.querySelector('div[style*="z-index: 9999"]')?.remove();
+    };
 });
 
 // Paint options UI
@@ -336,8 +319,7 @@ function pushUndo() {
     if (undoStack.length > 30) undoStack.shift();
 }
 
-// Made async to handle checkFishAfterStroke
-async function undo() {
+function undo() {
     if (undoStack.length > 0) {
         const imgData = undoStack.pop();
         ctx.putImageData(imgData, 0, 0);
@@ -345,17 +327,15 @@ async function undo() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
     // Recalculate fish probability after undo
-    await checkFishAfterStroke();
+    checkFishAfterStroke();
 }
 
-// Made async to handle checkFishAfterStroke
-async function clearCanvas() {
+function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    await checkFishAfterStroke();
+    checkFishAfterStroke();
 }
 
-// Made async to handle checkFishAfterStroke
-async function flipCanvas() {
+function flipCanvas() {
     // Save current state to undo stack before flipping
     pushUndo();
     
@@ -388,7 +368,7 @@ async function flipCanvas() {
     ctx.restore();
     
     // Recompute fish score after flipping
-    await checkFishAfterStroke();
+    checkFishAfterStroke();
 }
 
 function createUndoButton() {
@@ -404,8 +384,7 @@ function createUndoButton() {
             undoBtn.style.fontSize = '12px';
             undoBtn.style.borderRadius = '4px';
             undoBtn.style.cursor = 'pointer';
-            // Made async to handle undo
-            undoBtn.onclick = async () => await undo();
+            undoBtn.onclick = undo;
             controlsContainer.appendChild(undoBtn);
         }
     }
@@ -424,8 +403,7 @@ function createClearButton() {
             clearBtn.style.fontSize = '12px';
             clearBtn.style.borderRadius = '4px';
             clearBtn.style.cursor = 'pointer';
-            // Made async to handle clearCanvas
-            clearBtn.onclick = async () => await clearCanvas();
+            clearBtn.onclick = clearCanvas;
             controlsContainer.appendChild(clearBtn);
         }
     }
@@ -444,8 +422,7 @@ function createFlipButton() {
             flipBtn.style.fontSize = '12px';
             flipBtn.style.borderRadius = '4px';
             flipBtn.style.cursor = 'pointer';
-            // Made async to handle flipCanvas
-            flipBtn.onclick = async () => await flipCanvas();
+            flipBtn.onclick = flipCanvas;
             controlsContainer.appendChild(flipBtn);
         }
     }
@@ -630,67 +607,61 @@ function preprocessCanvasForONNX(canvas) {
 
 // Updated verifyFishDoodle function to match new model output format
 async function verifyFishDoodle(canvas) {
-    try {
-        // Model should already be loaded, but check just in case
-        if (!ortSession) {
-            throw new Error('Fish model not loaded');
-        }
-        
-        // Use updated preprocessing
-        const inputTensor = preprocessCanvasForONNX(canvas);
-        
-        // Run inference
-        let feeds = {};
-        if (ortSession && ortSession.inputNames && ortSession.inputNames.length > 0) {
-            feeds[ortSession.inputNames[0]] = inputTensor;
-        } else {
-            feeds['input'] = inputTensor;
-        }
-        const results = await ortSession.run(feeds);
-        const outputKey = Object.keys(results)[0];
-        const output = results[outputKey].data;
-        
-        // The model outputs a single logit value
-        // During training: labels = 1 - labels, so fish = 0, not_fish = 1
-        // Model output > 0.5 means "not_fish", < 0.5 means "fish"
-        const logit = output[0];
-        const prob = 1 / (1 + Math.exp(-logit));  // Sigmoid activation
-        
-        // Since the model was trained with inverted labels (fish=0, not_fish=1)
-        // A low probability means it's more likely to be a fish
-        const fishProbability = 1 - prob;
-        const isFish = fishProbability >= 0.60;  // Threshold for fish classification
-            
-        // Update UI with fish probability
-        let probDiv = document.getElementById('fish-probability');
-        if (!probDiv) {
-            probDiv = document.createElement('div');
-            probDiv.id = 'fish-probability';
-            probDiv.style.textAlign = 'center';
-            probDiv.style.margin = '10px 0 0 0';
-            probDiv.style.fontWeight = 'bold';
-            probDiv.style.fontSize = '1.1em';
-            probDiv.style.color = isFish ? '#218838' : '#c0392b';
-            const drawCanvas = document.getElementById('draw-canvas');
-            if (drawCanvas && drawCanvas.parentNode) {
-                if (drawCanvas.nextSibling) {
-                    drawCanvas.parentNode.insertBefore(probDiv, drawCanvas.nextSibling);
-                } else {
-                    drawCanvas.parentNode.appendChild(probDiv);
-                }
-            } else {
-                const drawUI = document.getElementById('draw-ui');
-                if (drawUI) drawUI.appendChild(probDiv);
-            }
-        }
-        probDiv.textContent = `Fish probability: ${(fishProbability * 100).toFixed(1)}%`;
-        probDiv.style.color = isFish ? '#218838' : '#c0392b';
-        return isFish;
-    } catch (error) {
-        console.error('Error in verifyFishDoodle:', error);
-        // Return true as fallback to avoid blocking user interaction
-        return true;
+    // Model should already be loaded, but check just in case
+    if (!ortSession) {
+        throw new Error('Fish model not loaded');
     }
+    
+    // Use updated preprocessing
+    const inputTensor = preprocessCanvasForONNX(canvas);
+    
+    // Run inference
+    let feeds = {};
+    if (ortSession && ortSession.inputNames && ortSession.inputNames.length > 0) {
+        feeds[ortSession.inputNames[0]] = inputTensor;
+    } else {
+        feeds['input'] = inputTensor;
+    }
+    const results = await ortSession.run(feeds);
+    const outputKey = Object.keys(results)[0];
+    const output = results[outputKey].data;
+    
+    // The model outputs a single logit value
+    // During training: labels = 1 - labels, so fish = 0, not_fish = 1
+    // Model output > 0.5 means "not_fish", < 0.5 means "fish"
+    const logit = output[0];
+    const prob = 1 / (1 + Math.exp(-logit));  // Sigmoid activation
+    
+    // Since the model was trained with inverted labels (fish=0, not_fish=1)
+    // A low probability means it's more likely to be a fish
+    const fishProbability = 1 - prob;
+    const isFish = fishProbability >= 0.60;  // Threshold for fish classification
+        
+    // Update UI with fish probability
+    let probDiv = document.getElementById('fish-probability');
+    if (!probDiv) {
+        probDiv = document.createElement('div');
+        probDiv.id = 'fish-probability';
+        probDiv.style.textAlign = 'center';
+        probDiv.style.margin = '10px 0 0 0';
+        probDiv.style.fontWeight = 'bold';
+        probDiv.style.fontSize = '1.1em';
+        probDiv.style.color = isFish ? '#218838' : '#c0392b';
+        const drawCanvas = document.getElementById('draw-canvas');
+        if (drawCanvas && drawCanvas.parentNode) {
+            if (drawCanvas.nextSibling) {
+                drawCanvas.parentNode.insertBefore(probDiv, drawCanvas.nextSibling);
+            } else {
+                drawCanvas.parentNode.appendChild(probDiv);
+            }
+        } else {
+            const drawUI = document.getElementById('draw-ui');
+            if (drawUI) drawUI.appendChild(probDiv);
+        }
+    }
+    probDiv.textContent = `Fish probability: ${(fishProbability * 100).toFixed(1)}%`;
+    probDiv.style.color = isFish ? '#218838' : '#c0392b';
+    return isFish;
 }
 
 // Show/hide fish warning and update background color
@@ -704,28 +675,21 @@ function showFishWarning(show) {
 
 // After each stroke, check if it's a fish
 async function checkFishAfterStroke() {
-    try {
-        if (!window.ort) return; // ONNX runtime not loaded
-        
-        // Wait for model to be loaded if it's not ready yet
-        if (!ortSession) {
-            try {
-                await loadFishModel();
-            } catch (error) {
-                console.error('Model not available for fish checking:', error);
-                return;
-            }
+    if (!window.ort) return; // ONNX runtime not loaded
+    
+    // Wait for model to be loaded if it's not ready yet
+    if (!ortSession) {
+        try {
+            await loadFishModel();
+        } catch (error) {
+            console.error('Model not available for fish checking:', error);
+            return;
         }
-        
-        const isFish = await verifyFishDoodle(canvas);
-        lastFishCheck = isFish;
-        showFishWarning(!isFish);
-    } catch (error) {
-        console.error('Error in checkFishAfterStroke:', error);
-        // Silently fail and assume it's a fish to avoid disrupting user experience
-        lastFishCheck = true;
-        showFishWarning(false);
     }
+    
+    const isFish = await verifyFishDoodle(canvas);
+    lastFishCheck = isFish;
+    showFishWarning(!isFish);
 }
 
 // Load ONNX Runtime Web from CDN if not present
@@ -738,9 +702,6 @@ async function checkFishAfterStroke() {
             loadFishModel().catch(error => {
                 console.error('Failed to load model on startup:', error);
             });
-        };
-        script.onerror = () => {
-            console.error('Failed to load ONNX Runtime from CDN');
         };
         document.head.appendChild(script);
     } else {
@@ -759,8 +720,6 @@ function showWelcomeBackMessage() {
     const userToken = localStorage.getItem('userToken');
     const userData = localStorage.getItem('userData');
     const welcomeElement = document.getElementById('welcome-back-message');
-    
-    if (!welcomeElement) return; // Element doesn't exist
     
     // Only show for users who have interacted before but haven't created an account
     if (userId && artistName && artistName !== 'Anonymous' && !userToken) {
